@@ -13,6 +13,8 @@ class TodoListPage extends StatefulWidget {
 class _TodoListPageState extends State<TodoListPage> {
   final TextEditingController _taskController = TextEditingController();
   final List<Task> _tasks = [];
+  Task? deletedTask;
+  int? deletedTaskPos;
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +34,13 @@ class _TodoListPageState extends State<TodoListPage> {
             ),
             child: Padding(
               padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 160.0),
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 32.0),
               child: Card(
                 color: Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    // mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Align(
@@ -87,27 +89,52 @@ class _TodoListPageState extends State<TodoListPage> {
                       SizedBox(
                         height: 16.0,
                       ),
-                      Flexible(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemBuilder: (BuildContext context, int index) {
-                            return TodoListItem(
-                              task: _tasks[index],
-                              deleteTask: _deleteTask,
-                              changeCheckBoxValue: _changeCheckBoxValue,
-                            );
-                          },
-                          itemCount: _tasks.length,
-                        ),
+                      Expanded(
+                        child: _tasks.isEmpty
+                            ? Align(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Image(
+                                      width: 100,
+                                      image: AssetImage(
+                                          'assets/images/listTasksEmpty.png'),
+                                    ),
+                                    SizedBox(
+                                      height: 15,
+                                    ),
+                                    Text(
+                                      'Vamos adicionar novas tarefinhas?',
+                                      style: TextStyle(
+                                        fontSize: 16.0,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return TodoListItem(
+                                    task: _tasks[index],
+                                    deleteTask: _deleteTask,
+                                    changeCheckBoxValue: _changeCheckBoxValue,
+                                  );
+                                },
+                                itemCount: _tasks.length,
+                              ),
                       ),
                       SizedBox(
                         height: 16.0,
                       ),
                       Text(
-                        'Você possui ${_tasks.length} tarefas pendentes',
+                        'Você possui ${_tasks.where((element) => !element.stateTask).length} tarefas pendentes',
                       ),
                       ElevatedButton(
-                        onPressed: _cleanTaskList,
+                        onPressed:
+                            _tasks.where((element) => element.stateTask).isEmpty
+                                ? null
+                                : _showDialogConfirmDeleteTasks,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.purple,
                         ),
@@ -134,22 +161,78 @@ class _TodoListPageState extends State<TodoListPage> {
     });
   }
 
-  void _cleanTaskList() {
+  void _removeTaskListWhere() {
     setState(() {
       _tasks.removeWhere((element) => element.stateTask);
-      // _tasks.clear();
     });
+    Navigator.pop(context);
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   void _deleteTask(Task task) {
+    deletedTask = task;
+    deletedTaskPos = _tasks.indexOf(task);
+
     setState(() {
       _tasks.remove(task);
     });
+
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.purple,
+        content: Text('Tarefa removida com sucesso!'),
+        action: SnackBarAction(
+          onPressed: () {
+            setState(() {
+              _tasks.insert(deletedTaskPos!, deletedTask!);
+            });
+          },
+          label: 'Desfazer',
+          textColor: Colors.white,
+        ),
+      ),
+    );
   }
 
   void _changeCheckBoxValue(Task task) {
     setState(() {
       task.stateTask = !task.stateTask;
     });
+  }
+
+  void _showDialogConfirmDeleteTasks() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Remover tarefas concluídas?'),
+            content: Text(
+              'Você tem certeza que deseja apagar todas as tarefas?',
+            ),
+            actions: [
+              OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('Cancelar')),
+              ElevatedButton(
+                  onPressed: _removeTaskListWhere, child: Text('Confirmar'))
+            ],
+          );
+          // return Card(
+          //   child: Column(
+          //     children: [
+          //       Text(''),
+          //       Row(
+          //         children: [
+          //           OutlinedButton(onPressed: () {}, child: Text('Cancelar')),
+          //           ElevatedButton(onPressed: () {}, child: Text('Confirmar'))
+          //         ],
+          //       ),
+          //     ],
+          //   ),
+          // );
+        });
   }
 }
