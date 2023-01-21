@@ -26,12 +26,13 @@ class _TodoListPageState extends State<TodoListPage> {
           body: Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                  image: AssetImage('assets/images/background.jpg'),
-                  fit: BoxFit.cover),
+                image: AssetImage('assets/images/background.jpg'),
+                fit: BoxFit.cover,
+              ),
             ),
             child: Padding(
               padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 64.0),
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 160.0),
               child: Card(
                 color: Colors.white,
                 child: Padding(
@@ -93,6 +94,7 @@ class _TodoListPageState extends State<TodoListPage> {
                             return TodoListItem(
                               task: _tasks[index],
                               deleteTask: _deleteTask,
+                              changeCheckBoxValue: _changeCheckBoxValue,
                             );
                           },
                           itemCount: _tasks.length,
@@ -142,6 +144,12 @@ class _TodoListPageState extends State<TodoListPage> {
   void _deleteTask(Task task) {
     setState(() {
       _tasks.remove(task);
+    });
+  }
+
+  void _changeCheckBoxValue(Task task) {
+    setState(() {
+      task.stateTask = !task.stateTask;
     });
   }
 }
